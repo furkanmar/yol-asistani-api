@@ -3,13 +3,14 @@ version: '3.9'
 services:
   postgres:
     image: postgis/postgis:16-3.4
+    platform: linux/arm64
     restart: unless-stopped
     environment:
       POSTGRES_DB: yol_asistani
       POSTGRES_USER: yol_user
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
