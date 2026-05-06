@@ -9,8 +9,6 @@ services:
       POSTGRES_DB: yol_asistani
       POSTGRES_USER: yol_user
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -22,8 +20,6 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:
