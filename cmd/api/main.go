@@ -14,6 +14,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/furkan/yol-asistani-api/config"
 	"github.com/furkan/yol-asistani-api/internal/auth"
 	"github.com/furkan/yol-asistani-api/internal/db"
@@ -30,10 +32,18 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// DB bağlantısı
-	pool, err := db.NewPool(ctx, cfg.DatabaseURL)
-	if err != nil {
-		log.Fatalf("db connect: %v", err)
+	// DB bağlantısı — postgres hazır olana kadar retry
+	var pool *pgxpool.Pool
+	for i := range 10 {
+		pool, err = db.NewPool(ctx, cfg.DatabaseURL)
+		if err == nil {
+			break
+		}
+		log.Printf("db not ready (attempt %d/10): %v", i+1, err)
+		time.Sleep(3 * time.Second)
+	}
+	if pool == nil {
+		log.Fatalf("db connect: gave up after 10 attempts")
 	}
 	defer pool.Close()
 
