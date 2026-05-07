@@ -19,6 +19,7 @@ import (
 	"github.com/furkan/yol-asistani-api/config"
 	"github.com/furkan/yol-asistani-api/internal/auth"
 	"github.com/furkan/yol-asistani-api/internal/db"
+	"github.com/furkan/yol-asistani-api/internal/route"
 	"github.com/furkan/yol-asistani-api/internal/trip"
 	"github.com/furkan/yol-asistani-api/internal/waypoint"
 )
@@ -121,6 +122,19 @@ func main() {
 	trips.Put("/:id/waypoints/:wid", wpHandler.Update)
 	trips.Delete("/:id/waypoints/:wid", wpHandler.Delete)
 	trips.Post("/:id/waypoints/reorder", wpHandler.Reorder)
+
+	// Routes
+	osrmClient := route.NewOSRMClient(cfg.OSRMBaseURL)
+	routeCache, err := route.NewRouteCache(cfg.RedisURL)
+	if err != nil {
+		log.Fatalf("route cache: %v", err)
+	}
+	routeSvc := route.NewService(osrmClient, routeCache)
+	routeHandler := route.NewHandler(routeSvc)
+
+	routes := v1.Group("/routes")
+	routes.Get("/alternatives", routeHandler.Alternatives)
+	routes.Get("/segment", routeHandler.Segment)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)

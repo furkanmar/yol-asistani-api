@@ -28,6 +28,21 @@ services:
       timeout: 3s
       retries: 5
 
+  osrm:
+    image: osrm/osrm-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld /data/turkey-latest.osrm --max-table-size 10000
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   api:
     build: .
     restart: unless-stopped

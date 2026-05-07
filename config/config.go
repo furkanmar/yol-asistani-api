@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	DatabaseURL       string
-	RedisURL          string
-	JWTSecret         string
-	JWTRefreshSecret  string
-	Port              string
-	Env               string
+	DatabaseURL      string
+	RedisURL         string
+	JWTSecret        string
+	JWTRefreshSecret string
+	OSRMBaseURL      string
+	Port             string
+	Env              string
 }
 
 func Load() (*Config, error) {
@@ -25,8 +26,13 @@ func Load() (*Config, error) {
 		RedisURL:         os.Getenv("REDIS_URL"),
 		JWTSecret:        os.Getenv("JWT_SECRET"),
 		JWTRefreshSecret: os.Getenv("JWT_REFRESH_SECRET"),
+		OSRMBaseURL:      os.Getenv("OSRM_BASE_URL"),
 		Port:             os.Getenv("PORT"),
 		Env:              os.Getenv("ENV"),
+	}
+
+	if cfg.OSRMBaseURL == "" {
+		cfg.OSRMBaseURL = "http://osrm:5000"
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -37,6 +43,9 @@ func Load() (*Config, error) {
 	}
 	if cfg.JWTRefreshSecret == "" {
 		return nil, fmt.Errorf("JWT_REFRESH_SECRET required")
+	}
+	if cfg.RedisURL == "" {
+		cfg.RedisURL = "redis://redis:6379"
 	}
 	if cfg.Port == "" {
 		cfg.Port = "8080"
