@@ -1,0 +1,17 @@
+# OSRM backend — ARM64 (Raspberry Pi 5)
+# Ubuntu 22.04 apt paketi: osrm-backend 5.26.x (api_version=4 uyumlu)
+# linux/amd64 değil, linux/arm64 native.
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        osrm-backend \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 5000
+
+ENTRYPOINT ["osrm-routed"]
