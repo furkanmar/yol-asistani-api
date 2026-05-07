@@ -1,17 +1,67 @@
-# OSRM backend — ARM64 (Raspberry Pi 5)
-# Ubuntu 22.04 apt paketi: osrm-backend 5.26.x (api_version=4 uyumlu)
-# linux/amd64 değil, linux/arm64 native.
+# OSRM backend — ARM64, compiled from source (Ubuntu 22.04)
+# osrm-backend apt paketi arm64 için yok; kaynaktan derleme gerekli.
+#
+# Build time : ~20-30 dk (Pi 5, 4 core)
+# Disk (build): ~2.5 GB geçici  →  build sonrası: docker builder prune -f
+# Final image : ~250 MB
 
-FROM ubuntu:22.04
-
+# ── Builder ────────────────────────────────────────────────────────────────
+FROM ubuntu:22.04 AS builder
 ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        osrm-backend \
-        wget \
+# libboost-all-dev yerine sadece ihtiyaç duyulan paketler (disk tasarrufu)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake git pkg-config \
+    libbz2-dev libxml2-dev libzip-dev zlib1g-dev \
+    libboost-filesystem-dev \
+    libboost-iostreams-dev \
+    libboost-regex-dev \
+    libboost-thread-dev \
+    libboost-date-time-dev \
+    libboost-program-options-dev \
+    libboost-system-dev \
+    libtbb-dev \
+    lua5.4 liblua5.4-dev \
+    libprotobuf-dev protobuf-compiler \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 5000
+ARG OSRM_VERSION=v5.27.1
+RUN git clone --depth 1 --branch ${OSRM_VERSION} \
+    https://github.com/Project-OSRM/osrm-backend.git /osrm-src
 
+WORKDIR /osrm-src/build
+RUN cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DENABLE_MASON=OFF \
+        -DENABLE_NODE_BINDINGS=OFF \
+        -DENABLE_TESTS=OFF \
+    && make -j$(nproc) \
+    && strip osrm-extract osrm-partition osrm-customize osrm-routed 2>/dev/null || true
+
+# ── Runtime ────────────────────────────────────────────────────────────────
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libboost-filesystem1.74.0 \
+    libboost-iostreams1.74.0 \
+    libboost-regex1.74.0 \
+    libboost-thread1.74.0 \
+    libboost-date-time1.74.0 \
+    libboost-program-options1.74.0 \
+    libboost-system1.74.0 \
+    libtbb12 \
+    liblua5.4-0 \
+    libzip4 \
+    libxml2 \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /osrm-src/build/osrm-extract    /usr/local/bin/
+COPY --from=builder /osrm-src/build/osrm-partition  /usr/local/bin/
+COPY --from=builder /osrm-src/build/osrm-customize  /usr/local/bin/
+COPY --from=builder /osrm-src/build/osrm-routed     /usr/local/bin/
+
+EXPOSE 5000
 ENTRYPOINT ["osrm-routed"]
