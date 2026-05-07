@@ -32,7 +32,8 @@ func Load() (*Config, error) {
 	}
 
 	if cfg.OSRMBaseURL == "" {
-		cfg.OSRMBaseURL = "http://osrm:5000"
+		// OSRM native (Pi'de apt/systemd), Docker container host üzerinden erişir
+		cfg.OSRMBaseURL = "http://host.docker.internal:5000"
 	}
 
 	if cfg.DatabaseURL == "" {

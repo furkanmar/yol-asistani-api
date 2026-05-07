@@ -26,29 +26,15 @@ services:
       timeout: 3s
       retries: 5
 
-  osrm:
-    build:
-      context: .
-      dockerfile: Dockerfile.osrm
-    platform: linux/arm64
-    restart: unless-stopped
-    # Port dışarı expose edilmiyor — api internal network üzerinden erişir (http://osrm:5000)
-    volumes:
-      - ./osrm-data:/data
-    command: --algorithm mld /data/turkey-latest.osrm --max-table-size 10000
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health 2>/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
   api:
     build: .
     restart: unless-stopped
     ports:
       - "8080:8080"
     env_file: .env
+    # host.docker.internal → Pi'de çalışan native OSRM'e erişim
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
