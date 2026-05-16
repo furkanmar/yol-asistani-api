@@ -31,7 +31,7 @@ else
       libboost-filesystem-dev libboost-iostreams-dev \
       libboost-regex-dev libboost-thread-dev \
       libboost-date-time-dev libboost-program-options-dev \
-      libboost-system-dev libtbb-dev \
+      libboost-system-dev libboost-test-dev libtbb-dev \
       lua5.4 liblua5.4-dev \
       libprotobuf-dev protobuf-compiler ca-certificates
 
@@ -43,10 +43,14 @@ else
       -DCMAKE_BUILD_TYPE=Release \
       -DENABLE_MASON=OFF \
       -DENABLE_NODE_BINDINGS=OFF \
-      -DENABLE_TESTS=OFF
+      -DENABLE_UNIT_TESTS=OFF
 
     cmake --build "$TMP/build" --parallel "$(nproc)"
-    sudo cmake --install "$TMP/build"
+    # cmake --install tüm hedefleri arar; sadece ihtiyacımız olanları kopyala
+    sudo cp "$TMP/build/osrm-extract"   /usr/local/bin/
+    sudo cp "$TMP/build/osrm-partition" /usr/local/bin/
+    sudo cp "$TMP/build/osrm-customize" /usr/local/bin/
+    sudo cp "$TMP/build/osrm-routed"    /usr/local/bin/
     rm -rf "$TMP"
     echo "==> Kaynaktan derleme tamamlandı."
   fi

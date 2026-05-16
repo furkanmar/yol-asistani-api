@@ -35,7 +35,7 @@ RUN cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DENABLE_MASON=OFF \
         -DENABLE_NODE_BINDINGS=OFF \
-        -DENABLE_TESTS=OFF \
+        -DENABLE_UNIT_TESTS=OFF \
     && make -j$(nproc) \
     && strip osrm-extract osrm-partition osrm-customize osrm-routed 2>/dev/null || true
 
